@@ -36,6 +36,9 @@ Runtime/
       IConnectionApprover.cs
       ILobbyLogger.cs
       ITickSource.cs
+      ICoroutineRunner.cs
+      IConnectionPayloadSerializer.cs
+      IPlayerIdentityStore.cs
       IStateMachineContext.cs
       ISessionManager.cs
     StateMachine/
@@ -81,7 +84,10 @@ Runtime/
       NetcodeNetworkFacade.cs
     Unity/
       MonoBehaviourTickSource.cs
+      MonoBehaviourCoroutineRunner.cs
       UnityDebugLogger.cs
+      JsonUtilityConnectionPayloadSerializer.cs
+      PlayerPrefsPlayerIdentityStore.cs
       LobbyConnectionHost.cs
 
   ConnectionMethods/
@@ -258,7 +264,53 @@ public interface ITickSource
 
 기존 `SessionManager`의 퍼블릭 메서드를 그대로 인터페이스화. 테스트 모의/구현 교체 용이성 확보.
 
-### 4.7 `ReconnectPolicy` (값 객체)
+### 4.7 `ICoroutineRunner` — 코루틴 실행 추상화 (스펙 보강 2026-04-17)
+
+재연결 상태가 Unity 코루틴으로 타이밍을 관리하므로, Core를 순수 C#으로 유지하기 위해 실행기를 추상화한다.
+
+```csharp
+public interface ICoroutineRunner
+{
+    object Start(IEnumerator routine);
+    void Stop(object handle);
+}
+```
+
+- 기본 구현: `MonoBehaviourCoroutineRunner` (Adapters, `MonoBehaviour.StartCoroutine` 위임).
+- 테스트 구현: `FakeCoroutineRunner` — 수동으로 한 스텝씩 `Advance()` 가능.
+- Core는 `System.Collections.IEnumerator`만 사용 (UnityEngine 아님).
+
+### 4.8 `IConnectionPayloadSerializer` — 페이로드 직렬화 추상화 (스펙 보강 2026-04-17)
+
+`ConnectionMethodBase`의 `UnityEngine.JsonUtility` 의존을 제거한다.
+
+```csharp
+public interface IConnectionPayloadSerializer
+{
+    byte[] Serialize(ConnectionPayload payload);
+    ConnectionPayload Deserialize(byte[] bytes);
+}
+```
+
+- 기본 구현: `JsonUtilityConnectionPayloadSerializer` (Adapters).
+- 테스트 구현: `FakeConnectionPayloadSerializer` (인-메모리 dict).
+
+### 4.9 `IPlayerIdentityStore` — 플레이어 식별자 저장소 추상화 (스펙 보강 2026-04-17)
+
+`PlayerIdentity`의 `PlayerPrefs`/`Application.dataPath`/`Environment.GetCommandLineArgs` 의존을 제거한다.
+
+```csharp
+public interface IPlayerIdentityStore
+{
+    string GetOrCreateGuid(string profile);
+    string ResolveProfile();
+}
+```
+
+- 기본 구현: `PlayerPrefsPlayerIdentityStore` (Adapters) — 기존 로직 그대로 이전.
+- 테스트 구현: `InMemoryPlayerIdentityStore`.
+
+### 4.10 `ReconnectPolicy` (값 객체)
 
 ```csharp
 public readonly struct ReconnectPolicy
