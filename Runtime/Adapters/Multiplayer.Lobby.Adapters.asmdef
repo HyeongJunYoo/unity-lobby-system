@@ -1,0 +1,17 @@
+{
+    "name": "Multiplayer.Lobby.Adapters",
+    "rootNamespace": "Multiplayer.Lobby.Adapters",
+    "references": [
+        "Multiplayer.Lobby.Core",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,19 @@
+{
+    "name": "Multiplayer.Lobby.ConnectionMethods.IP",
+    "rootNamespace": "Multiplayer.Lobby.ConnectionMethods.IP",
+    "references": [
+        "Multiplayer.Lobby.Core",
+        "Multiplayer.Lobby.Adapters",
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
