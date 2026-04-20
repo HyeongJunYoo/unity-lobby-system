@@ -2,7 +2,7 @@
   "name": "com.yoojoo97.multiplayer.lobby",
   "version": "0.2.0",
   "displayName": "Multiplayer Lobby System",
-  "description": "State-machine based lobby connection manager for Unity Netcode (UGS-free)",
+  "description": "State-machine based lobby connection manager for Unity Netcode (UGS-free). DI container-agnostic.",
   "unity": "6000.4",
   "dependencies": {
     "com.unity.netcode.gameobjects": "2.11.0",
@@ -16,5 +16,17 @@
   ],
   "author": {
     "name": "HyeongJunYoo"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Basic Manual Wiring",
+      "description": "DI \uCEE8\uD14C\uC774\uB108 \uC5C6\uC774 LobbyBuilder\uB85C \uC9C1\uC811 \uC870\uB9BD\uD558\uB294 \uCD5C\uC18C \uC608\uC81C.",
+      "path": "Samples~/BasicManual"
+    },
+    {
+      "displayName": "VContainer Integration",
+      "description": "VContainer LifetimeScope\uC5D0\uC11C LobbyBuilder\uB97C \uD638\uCD9C\uD558\uB294 \uD1B5\uD569 \uC608\uC81C. VContainer \uD328\uD0A4\uC9C0 \uD544\uC694.",
+      "path": "Samples~/VContainerIntegration"
+    }
+  ]
 }
