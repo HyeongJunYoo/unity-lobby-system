@@ -31,6 +31,7 @@ namespace Multiplayer.Lobby.Builder
         {
             if (m_Disposed) return;
             m_Disposed = true;
+            m_LifecycleSubscription?.Dispose();
             m_Machine.Dispose();
         }
     }
