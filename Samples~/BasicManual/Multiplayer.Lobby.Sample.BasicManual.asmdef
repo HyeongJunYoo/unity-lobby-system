@@ -1,0 +1,19 @@
+{
+    "name": "Multiplayer.Lobby.Sample.BasicManual",
+    "rootNamespace": "Multiplayer.Lobby.Sample.BasicManual",
+    "references": [
+        "Multiplayer.Lobby.Core",
+        "Multiplayer.Lobby.Adapters",
+        "Multiplayer.Lobby.ConnectionMethods.IP",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
