@@ -4,12 +4,17 @@ using Multiplayer.Lobby.Abstractions;
 
 namespace Multiplayer.Lobby.Adapters.Unity
 {
+    /// <summary>
+    /// MonoBehaviour 기반 ICoroutineRunner 구현.
+    /// Start/Stop은 명시적 인터페이스 구현으로 선언해 Unity의 MonoBehaviour.Start 생명주기
+    /// 콜백 이름과 충돌하지 않도록 한다.
+    /// </summary>
     public sealed class MonoBehaviourCoroutineRunner : MonoBehaviour, ICoroutineRunner
     {
-        public object Start(IEnumerator routine)
+        object ICoroutineRunner.Start(IEnumerator routine)
             => StartCoroutine(Wrap(routine));
 
-        public void Stop(object handle)
+        void ICoroutineRunner.Stop(object handle)
         {
             if (handle is Coroutine c) StopCoroutine(c);
         }
