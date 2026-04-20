@@ -12,11 +12,28 @@ namespace Multiplayer.Lobby.Builder
         IConnectionPayloadSerializer m_Serializer;
         PlayerIdentity m_Identity;
 
+        // 선택 의존성 (Build 시 기본값 주입)
+        ILobbyLogger m_Logger;
+        ISessionManager m_Sessions;
+        IConnectionApprover m_Approver;
+        ReconnectPolicy? m_ReconnectPolicy;
+        int m_MaxConnectedPlayers = 8;
+        System.Func<ulong, ConnectionPayload, Session.ISessionPlayerData> m_CreatePlayerData;
+
         public LobbyBuilder UseNetwork(INetworkFacade network)          { m_Network = network; return this; }
         public LobbyBuilder UseTickSource(ITickSource tick)             { m_Tick = tick; return this; }
         public LobbyBuilder UseCoroutineRunner(ICoroutineRunner runner) { m_Coroutines = runner; return this; }
         public LobbyBuilder UsePayloadSerializer(IConnectionPayloadSerializer s) { m_Serializer = s; return this; }
         public LobbyBuilder UseIdentity(PlayerIdentity identity)        { m_Identity = identity; return this; }
+
+        public LobbyBuilder UseLogger(ILobbyLogger logger)            { m_Logger = logger; return this; }
+        public LobbyBuilder UseSessionManager(ISessionManager sm)     { m_Sessions = sm; return this; }
+        public LobbyBuilder UseApprover(IConnectionApprover approver) { m_Approver = approver; return this; }
+        public LobbyBuilder UseReconnectPolicy(ReconnectPolicy policy){ m_ReconnectPolicy = policy; return this; }
+        public LobbyBuilder UseMaxPlayers(int max)                    { m_MaxConnectedPlayers = max; return this; }
+        public LobbyBuilder UseSessionPlayerDataFactory(
+            System.Func<ulong, ConnectionPayload, Session.ISessionPlayerData> factory)
+        { m_CreatePlayerData = factory; return this; }
 
         public LobbyConnection Build()
         {
