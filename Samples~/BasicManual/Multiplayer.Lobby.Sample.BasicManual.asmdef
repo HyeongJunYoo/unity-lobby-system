@@ -5,7 +5,8 @@
         "Multiplayer.Lobby.Core",
         "Multiplayer.Lobby.Adapters",
         "Multiplayer.Lobby.ConnectionMethods.IP",
-        "Unity.Netcode.Runtime"
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
