@@ -78,11 +78,17 @@ Package Manager의 **Samples** 탭에서 아래 샘플을 임포트할 수 있�
 
 씬에 `NetworkManager`를 두고, 그 옆에 `LobbyConnectionHost` 컴포넌트를 얹은 뒤 인스펙터에서 `NetworkManager` 레퍼런스만 연결한다. `MaxPlayers`와 `ReconnectAttempts`도 인스펙터에서 조정 가능.
 
+> ⚠️ `OnConfigure`는 **`LobbyConnectionHost.Start()`보다 먼저 호출되는 시점**(같은 GameObject의 `Awake` 또는 다른 컴포넌트의 `OnEnable`)에서 구독해야 한다. `Start()`가 끝난 뒤 구독하면 `Build()`가 이미 끝나 호출되지 않는다.
+
 ```csharp
-var host = FindObjectOfType<LobbyConnectionHost>();
-host.OnConfigure += builder => builder.UseSessionPlayerDataFactory(
-    (id, payload) => new MyPlayerData(id, payload.playerName));
-// Start()에서 Build()가 실행된 뒤 host.Connection 사용 가능
+// 같은 GameObject에 붙은 다른 MonoBehaviour의 Awake에서:
+void Awake()
+{
+    var host = GetComponent<LobbyConnectionHost>();
+    host.OnConfigure += builder => builder.UseSessionPlayerDataFactory(
+        (id, payload) => new MyPlayerData(id, payload.playerName));
+}
+// LobbyConnectionHost.Start()에서 Build()가 실행된 뒤 host.Connection 사용 가능
 ```
 
 ### 2) 수동 배선 (DI 컨테이너 없음)
