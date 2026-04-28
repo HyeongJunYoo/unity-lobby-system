@@ -3,6 +3,10 @@
     "rootNamespace": "Multiplayer.Lobby.Tests",
     "references": [
         "Multiplayer.Lobby.Core",
+        "Multiplayer.Lobby.Adapters",
+        "Multiplayer.Lobby.ConnectionMethods.IP",
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
