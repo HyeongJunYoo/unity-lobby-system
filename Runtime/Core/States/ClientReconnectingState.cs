@@ -87,7 +87,13 @@ namespace Multiplayer.Lobby.States
             if (m_NbAttempts > 0)
             {
                 var backoff = System.Math.Min(m_NextBackoffSeconds, Context.ReconnectPolicy.MaxBackoff.TotalSeconds);
-                yield return backoff;   // Adapter가 WaitForSeconds로 해석 (Task 27 참고)
+                yield return backoff;   // Adapter가 WaitForSeconds로 해석
+                m_NextBackoffSeconds *= Context.ReconnectPolicy.BackoffMultiplier;
+            }
+            else
+            {
+                // 1차 시도도 InitialBackoff만큼 대기 (Enter에서 m_NextBackoffSeconds = InitialBackoff)
+                yield return m_NextBackoffSeconds;
                 m_NextBackoffSeconds *= Context.ReconnectPolicy.BackoffMultiplier;
             }
 
@@ -98,9 +104,6 @@ namespace Multiplayer.Lobby.States
             Context.Logger.Info($"Reconnecting attempt {m_NbAttempts + 1}/{Context.ReconnectPolicy.MaxAttempts}...");
             Context.ReconnectPublisher.Publish(
                 new ReconnectMessage(m_NbAttempts, Context.ReconnectPolicy.MaxAttempts));
-
-            if (m_NbAttempts == 0)
-                yield return Context.ReconnectPolicy.InitialBackoff.TotalSeconds;
 
             m_NbAttempts++;
             var setupTask = m_ConnectionMethod.SetupClientReconnectionAsync();

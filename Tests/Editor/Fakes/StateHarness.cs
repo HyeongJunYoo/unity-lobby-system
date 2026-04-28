@@ -56,5 +56,16 @@ namespace Multiplayer.Lobby.Tests.Fakes
                 states[t] = (ConnectionState)Activator.CreateInstance(t, ctx);
             return h;
         }
+
+        public static StateHarness Build(ReconnectPolicy policy, params Type[] stateTypes)
+        {
+            var h = new StateHarness { ReconnectPolicy = policy };
+            var states = new Dictionary<Type, ConnectionState>();
+            h.Machine = new StateMachine(states, h.Network, h.Logger);
+            var ctx = new StateMachineContext(h);
+            foreach (var t in stateTypes)
+                states[t] = (ConnectionState)Activator.CreateInstance(t, ctx);
+            return h;
+        }
     }
 }
