@@ -18,7 +18,7 @@
 | `com.unity.transport` | 2.4.0 |
 | 현재 패키지 버전 | `0.2.0` |
 
-VContainer 샘플을 사용할 경우에만 VContainer 패키지가 필요하다. 본체는 VContainer를 **런타임 의존하지 않는다**.
+패키지 본체는 어떤 DI 컨테이너도 **런타임 의존하지 않는다**.
 
 ---
 
@@ -40,10 +40,11 @@ https://github.com/<org-or-user>/unity-lobby-system.git
 }
 ```
 
-Package Manager의 **Samples** 탭에서 아래 두 샘플을 임포트할 수 있다.
+Package Manager의 **Samples** 탭에서 아래 샘플을 임포트할 수 있다.
 
 - **Basic Manual Wiring** — DI 컨테이너 없이 수동 조립.
-- **VContainer Integration** — VContainer `LifetimeScope` 예시.
+
+> 패키지 본체는 DI 컨테이너 중립이다. VContainer / Zenject / Reflex 등의 컨테이너에서도 같은 패턴 — 컨테이너 등록 콜백 안에서 `LobbyBuilder.Build()` 한 번 호출해 `LobbyConnection`을 싱글턴으로 등록 — 으로 통합 가능. 특정 컨테이너 통합 코드는 사용자 프로젝트에 위치시키는 것을 권장한다.
 
 ---
 
@@ -125,40 +126,7 @@ lobby.RequestShutdown();
 lobby.Dispose();
 ```
 
-### 3) VContainer 연동
-
-```csharp
-public sealed class LobbyScope : LifetimeScope
-{
-    [SerializeField] NetworkManager m_NetworkManager;
-
-    protected override void Configure(IContainerBuilder builder)
-    {
-        builder.Register<IConnectionPayloadSerializer,
-            JsonUtilityConnectionPayloadSerializer>(Lifetime.Singleton);
-        builder.Register<IPlayerIdentityStore,
-            PlayerPrefsPlayerIdentityStore>(Lifetime.Singleton);
-        builder.Register<PlayerIdentity>(Lifetime.Singleton);
-
-        builder.Register<LobbyConnection>(resolver =>
-        {
-            var go = m_NetworkManager.gameObject;
-            return new LobbyBuilder()
-                .UseNetwork(new NetcodeNetworkFacade(m_NetworkManager))
-                .UseTickSource(go.AddComponent<MonoBehaviourTickSource>())
-                .UseCoroutineRunner(go.AddComponent<MonoBehaviourCoroutineRunner>())
-                .UseLogger(new UnityDebugLogger())
-                .UsePayloadSerializer(resolver.Resolve<IConnectionPayloadSerializer>())
-                .UseIdentity(resolver.Resolve<PlayerIdentity>())
-                .UseDefaultMessageChannels()
-                .UseDefaultStates()
-                .Build();
-        }, Lifetime.Singleton);
-    }
-}
-```
-
-Zenject/Reflex 사용자도 같은 패턴으로 포팅 가능 — `LobbyBuilder`를 한 번 호출해 `LobbyConnection` 싱글턴으로 등록하면 된다.
+> 다른 DI 컨테이너 사용 시: 컨테이너의 등록 콜백에서 위 2)의 `LobbyBuilder` 체인을 그대로 호출해 `LobbyConnection`을 싱글턴으로 등록하면 된다. 패키지는 컨테이너에 런타임 의존하지 않는다.
 
 ---
 
@@ -308,7 +276,6 @@ Core가 순수 C#이기 때문에 `INetworkFacade`, `ITickSource` 등을 Fake로
 | 경로 | 내용 |
 |---|---|
 | `Samples~/BasicManual/` | `LobbyBuilder`를 수동으로 조립. UI Toolkit 기반 간단 UI(`BasicLobbyUI`) 포함. |
-| `Samples~/VContainerIntegration/` | `LifetimeScope`에서 `LobbyBuilder`를 호출해 `LobbyConnection`을 싱글턴 등록. VContainer 패키지 필요. |
 
 ---
 
