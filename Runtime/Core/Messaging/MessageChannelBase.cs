@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Multiplayer.Lobby.Messaging
 {
+    /// <summary>
+    /// PubSub 채널의 베이스. 단일 스레드 사용 가정 — 자세한 계약은 IMessageChannel 참고.
+    /// </summary>
     public abstract class MessageChannelBase<T> : IMessageChannel<T>
     {
         protected readonly List<Action<T>> m_Handlers = new();
