@@ -130,6 +130,36 @@ var lobby = new LobbyBuilder()
 
 ---
 
+## 아키텍처
+
+```
+┌─────────────────────────────────────────────┐
+│  LobbyConnection  (public API)              │
+│    • StartHost / StartClient / Shutdown     │
+│    • OnHostStarted / OnClientConnected …    │
+│    • GetPublisher / GetSubscriber           │
+└──────────────────┬──────────────────────────┘
+                   │
+           ┌───────▼────────┐        ┌────────────────┐
+           │  StateMachine  │◄───────┤   States (6)   │
+           └───────┬────────┘        └────────────────┘
+                   │
+       ┌───────────▼────────────┐   ┌──────────────────────┐
+       │  INetworkFacade        │   │  IConnectionApprover │
+       │  (NetcodeNetworkFacade)│   │  ISessionManager     │
+       │  ITickSource           │   │  IConnectionPayload… │
+       │  ICoroutineRunner      │   │  ILobbyLogger        │
+       └────────────────────────┘   └──────────────────────┘
+```
+
+3개의 어셈블리로 분리되어 있습니다:
+
+- **Core** (순수 C#) — 상태 머신·세션·PubSub·빌더·추상화. `UnityEngine` 의존 없음.
+- **Adapters** — `NetworkManager`, `MonoBehaviour`, `PlayerPrefs`, `JsonUtility` 등 Unity/NGO 연결.
+- **ConnectionMethods/IP** — IP 직접 연결 구현. 별도 asmdef이라 안 쓰면 스트립 가능.
+
+---
+
 ## 좀 더 깊이 알고 싶다면
 
 | 알고 싶은 것 | 어디 |
