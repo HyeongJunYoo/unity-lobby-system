@@ -1,11 +1,11 @@
 # Multiplayer Lobby System
 
-상태 머신 기반 멀티플레이어 로비/연결 관리자 — Unity Netcode for GameObjects(NGO) 위에서 동작한다.
+Unity Netcode for GameObjects(NGO) 위에서 동작하는 **간단한 LAN 로비 시스템**입니다. Unity Gaming Services(Relay/Lobby) 없이도 IP 직접 연결로 호스트·클라이언트가 만나 게임을 시작할 수 있습니다.
 
-- **UGS-free** — Unity Gaming Services(Relay/Lobby) 없이도 IP 직접 연결로 완결 동작.
-- **DI 컨테이너 중립(container-agnostic)** — 수동 배선, VContainer, Zenject, Reflex 등과 동일 패턴으로 붙는다.
-- **Core는 순수 C#** — `UnityEngine` 의존 없이 EditMode 단위 테스트로 전량 커버 가능.
-- **확장 포인트 전부 인터페이스** — 트랜스포트·로거·세션·승인·재연결 정책·메시지 채널·상태를 전부 교체·추가 가능.
+- ✅ **UGS 없이** 동네 네트워크/직접 IP로 바로 연결
+- ✅ **상태 머신 기반** — Offline → Hosting/Connecting → Connected → Reconnecting 흐름이 미리 짜여 있음
+- ✅ **재연결 자동 처리** — 끊겼을 때 백오프 정책에 따라 알아서 재시도
+- ✅ **DI 컨테이너 무관** — 수동 배선/VContainer/Zenject 등 자유롭게
 
 ---
 
@@ -13,283 +13,131 @@
 
 | 항목 | 버전 |
 |---|---|
-| Unity | 6000.4+ |
+| Unity | 6000.4 이상 |
 | `com.unity.netcode.gameobjects` | 2.11.0 |
 | `com.unity.transport` | 2.4.0 |
-| 현재 패키지 버전 | `0.3.0` |
-
-패키지 본체는 어떤 DI 컨테이너도 **런타임 의존하지 않는다**.
+| 패키지 | `0.3.0` |
 
 ---
 
 ## 설치
 
-Unity Package Manager → `Add package from git URL`:
+Unity Package Manager → **Add package from git URL**:
 
 ```
-https://github.com/<org-or-user>/unity-lobby-system.git
+https://github.com/HyeongJunYoo/unity-lobby-system.git
 ```
 
-또는 `Packages/manifest.json` 직접 편집:
+또는 `Packages/manifest.json`:
 
 ```json
 {
   "dependencies": {
-    "com.yoojoo97.multiplayer.lobby": "0.2.0"
+    "com.yoojoo97.multiplayer.lobby": "0.3.0"
   }
 }
 ```
 
-Package Manager의 **Samples** 탭에서 아래 샘플을 임포트할 수 있다.
-
-- **Basic Manual Wiring** — DI 컨테이너 없이 수동 조립.
-
-> 패키지 본체는 DI 컨테이너 중립이다. VContainer / Zenject / Reflex 등의 컨테이너에서도 같은 패턴 — 컨테이너 등록 콜백 안에서 `LobbyBuilder.Build()` 한 번 호출해 `LobbyConnection`을 싱글턴으로 등록 — 으로 통합 가능. 특정 컨테이너 통합 코드는 사용자 프로젝트에 위치시키는 것을 권장한다.
-
 ---
 
-## 어셈블리 레이아웃
+## 30초 만에 써보기 (인스펙터 방식)
 
-패키지는 3개의 asmdef로 분리되어 있다.
-
-| 어셈블리 | 경로 | 의존 |
-|---|---|---|
-| `Multiplayer.Lobby.Core` | `Runtime/Core/` | 순수 C# (UnityEngine 없음) |
-| `Multiplayer.Lobby.Adapters` | `Runtime/Adapters/` | Netcode + Unity |
-| `Multiplayer.Lobby.ConnectionMethods.IP` | `Runtime/ConnectionMethods/IP/` | Adapters + Core |
-| `Multiplayer.Lobby.Tests.Editor` | `Tests/Editor/` | Core (EditMode 테스트) |
-
-주요 네임스페이스:
-
-- `Multiplayer.Lobby.Abstractions` — 인터페이스 (`INetworkFacade`, `ILobbyLogger`, `ITickSource`, `ICoroutineRunner`, `IConnectionPayloadSerializer`, `IConnectionApprover`, `IPlayerIdentityStore`, `ISessionManager`, `IStateMachineContext`).
-- `Multiplayer.Lobby.StateMachine` / `.States` — 상태 머신과 기본 6개 상태.
-- `Multiplayer.Lobby.Session` — 세션 플레이어 데이터 관리.
-- `Multiplayer.Lobby.Messaging` — 타입 키 PubSub 채널.
-- `Multiplayer.Lobby.Connection` — 페이로드, 재연결 정책, 상태 enum.
-- `Multiplayer.Lobby.Builder` — `LobbyBuilder`, `LobbyConnection`.
-- `Multiplayer.Lobby.Adapters.Netcode` / `.Adapters.Unity` — NGO·Unity 어댑터.
-- `Multiplayer.Lobby.ConnectionMethods.IP` — IP 직결 구현.
-
----
-
-## 빠른 시작
-
-### 1) 인스펙터 원샷 배선 (가장 간단)
-
-씬에 `NetworkManager`를 두고, 그 옆에 `LobbyConnectionHost` 컴포넌트를 얹은 뒤 인스펙터에서 `NetworkManager` 레퍼런스만 연결한다. `MaxPlayers`와 `ReconnectAttempts`도 인스펙터에서 조정 가능.
-
-> ⚠️ `OnConfigure`는 **`LobbyConnectionHost.Start()`보다 먼저 호출되는 시점**(같은 GameObject의 `Awake` 또는 다른 컴포넌트의 `OnEnable`)에서 구독해야 한다. `Start()`가 끝난 뒤 구독하면 `Build()`가 이미 끝나 호출되지 않는다.
+1. 씬에 빈 GameObject를 만들고 다음 컴포넌트를 차례로 추가:
+   - `NetworkManager` (NGO 패키지 제공)
+   - `UnityTransport` (자동 슬롯 연결)
+   - **`LobbyConnectionHost`** (이 패키지 제공)
+2. `LobbyConnectionHost` 인스펙터에서 `Network Manager` 슬롯에 같은 GameObject 드래그.
+3. Play → 코드에서 호스트나 클라이언트 시작:
 
 ```csharp
-// 같은 GameObject에 붙은 다른 MonoBehaviour의 Awake에서:
-void Awake()
-{
-    var host = GetComponent<LobbyConnectionHost>();
-    host.OnConfigure += builder => builder.UseSessionPlayerDataFactory(
-        (id, payload) => new MyPlayerData(id, payload.playerName));
-}
-// LobbyConnectionHost.Start()에서 Build()가 실행된 뒤 host.Connection 사용 가능
-```
-
-### 2) 수동 배선 (DI 컨테이너 없음)
-
-```csharp
-using Multiplayer.Lobby.Adapters.Netcode;
 using Multiplayer.Lobby.Adapters.Unity;
-using Multiplayer.Lobby.Builder;
-using Multiplayer.Lobby.Connection;
 using Multiplayer.Lobby.ConnectionMethods.IP;
 
-var tick       = gameObject.AddComponent<MonoBehaviourTickSource>();
-var coroutines = gameObject.AddComponent<MonoBehaviourCoroutineRunner>();
-var identity   = new PlayerIdentity(new PlayerPrefsPlayerIdentityStore());
-var serializer = new JsonUtilityConnectionPayloadSerializer();
+var host = FindFirstObjectByType<LobbyConnectionHost>();
 
-var lobby = new LobbyBuilder()
-    .UseNetwork(new NetcodeNetworkFacade(networkManager))
-    .UseTickSource(tick)
-    .UseCoroutineRunner(coroutines)
-    .UseLogger(new UnityDebugLogger())
-    .UsePayloadSerializer(serializer)
-    .UseIdentity(identity)
-    .UseMaxPlayers(8)
-    .UseSessionPlayerDataFactory((id, p) => new MyPlayerData(id, p.playerName))
-    .UseReconnectPolicy(ReconnectPolicy.Default)
-    .UseDefaultMessageChannels()
-    .UseDefaultStates()
-    .Build();
+// 호스트로 시작
+host.Connection.StartHostIp(host.GetComponent<NetworkManager>(),
+    new PlayerIdentity(new PlayerPrefsPlayerIdentityStore()),
+    new JsonUtilityConnectionPayloadSerializer(),
+    "MyName", "127.0.0.1", 7777, isDebug: false);
 
-// 호스트 시작
-lobby.StartHostIp(networkManager, identity, serializer,
-    "Me", "127.0.0.1", 7777, Debug.isDebugBuild);
-
-// 또는 클라이언트 접속
-lobby.StartClientIp(networkManager, identity, serializer,
-    "Me", "192.168.0.10", 7777, Debug.isDebugBuild);
+// 또는 클라이언트로 접속
+host.Connection.StartClientIp(host.GetComponent<NetworkManager>(),
+    new PlayerIdentity(new PlayerPrefsPlayerIdentityStore()),
+    new JsonUtilityConnectionPayloadSerializer(),
+    "MyName", "192.168.0.10", 7777, isDebug: false);
 
 // 종료
-lobby.RequestShutdown();
-lobby.Dispose();
+host.Connection.RequestShutdown();
 ```
 
-> 다른 DI 컨테이너 사용 시: 컨테이너의 등록 콜백에서 위 2)의 `LobbyBuilder` 체인을 그대로 호출해 `LobbyConnection`을 싱글턴으로 등록하면 된다. 패키지는 컨테이너에 런타임 의존하지 않는다.
+> 더 보기 좋은 예제는 Package Manager → **Samples** 탭에서 **Basic Manual Wiring** 샘플을 임포트하면 UI 포함 완성된 셋업이 따라옵니다.
 
 ---
 
-## 상태 머신
-
-기본 상태 (`UseDefaultStates()`로 전부 등록):
-
-```
-OfflineState
-   ├─ StartHost ─► StartingHostState ─► HostingState
-   └─ StartClient ─► ClientConnectingState ─► ClientConnectedState
-                                                 └─ (disconnect) ─► ClientReconnectingState
-```
-
-- 상태 추가: `builder.AddState<MyState>(ctx => new MyState(ctx))`
-- 상태 교체: `builder.ReplaceState<ClientConnectingState>(ctx => new MyCustomConnecting(ctx))`
-- `ConnectionState` / `OnlineState`를 상속해 새 전이를 정의한다.
-- 초기 상태는 항상 `OfflineState` (필수).
-
----
-
-## 메시지 채널 (PubSub)
-
-`LobbyBuilder.UseDefaultMessageChannels()`로 아래 4개가 기본 등록된다.
-
-| 메시지 타입 | 용도 |
-|---|---|
-| `ConnectStatus` (enum) | 연결 결과 코드(Success/ServerFull/IncompatibleBuildType 등) |
-| `ReconnectMessage` | 재연결 시도 이벤트 |
-| `ConnectionEventMessage` | 클라이언트 입·퇴장 이벤트 |
-| `LobbyLifecycleMessage` (enum) | HostStarted / ClientConnected / Disconnected 통합 경로 |
-
-소비:
+## 이벤트 받기
 
 ```csharp
-using var sub = lobby.GetSubscriber<ConnectStatus>().Subscribe(status =>
+host.Connection.OnHostStarted     += () => Debug.Log("호스트 시작!");
+host.Connection.OnClientConnected += () => Debug.Log("연결됨!");
+host.Connection.OnDisconnected    += () => Debug.Log("끊김");
+```
+
+연결 결과 코드(`Success`, `ServerFull` 등)를 받고 싶다면:
+
+```csharp
+using var sub = host.Connection.GetSubscriber<ConnectStatus>()
+    .Subscribe(status => Debug.Log($"상태: {status}"));
+```
+
+---
+
+## 재연결 정책 바꾸기
+
+기본은 시도 2회, 1초 → 2초 백오프. 인스펙터의 `Reconnect Attempts`로 시도 횟수를 조정하거나, 더 세밀하게는 코드로:
+
+```csharp
+// LobbyConnectionHost가 빌드 직전에 콜백을 던집니다 (Awake/OnEnable에서 구독)
+host.OnConfigure += builder => builder.UseReconnectPolicy(new ReconnectPolicy
 {
-    if (status == ConnectStatus.ServerFull) ShowServerFullDialog();
-});
-```
-
-커스텀 타입 등록:
-
-```csharp
-builder.AddMessageChannel<ChatMessage>();
-...
-lobby.GetPublisher<ChatMessage>().Publish(new ChatMessage(...));
-```
-
-편의용 C# 이벤트도 함께 제공된다 (`LobbyLifecycleMessage`를 랩핑):
-
-```csharp
-lobby.OnHostStarted    += () => { ... };
-lobby.OnClientConnected += () => { ... };
-lobby.OnDisconnected   += () => { ... };
-```
-
----
-
-## 재연결 정책
-
-```csharp
-builder.UseReconnectPolicy(new ReconnectPolicy
-{
-    MaxAttempts       = 3,
+    MaxAttempts       = 5,
     InitialBackoff    = TimeSpan.FromSeconds(1),
     MaxBackoff        = TimeSpan.FromSeconds(30),
     BackoffMultiplier = 2.0
 });
 ```
 
-기본값은 `ReconnectPolicy.Default` (시도 2회, 1s → 2s → 4s … 최대 30s).
-
 ---
 
-## 확장 포인트
+## 직접 배선하고 싶다면 (DI 컨테이너 사용 시)
 
-| 확장 대상 | 인터페이스 / 진입점 | 방법 |
-|---|---|---|
-| 연결 방식 (Relay/Steam 등) | `ConnectionMethodBase` | 서브클래스 + 별도 asmdef 권장 |
-| 상태 추가 | `IStateMachineContext` | `builder.AddState<T>(ctx => new T(ctx))` |
-| 상태 교체 | 동일 | `builder.ReplaceState<T>(ctx => new T(ctx))` |
-| 세션 데이터 | `ISessionPlayerData` | `builder.UseSessionPlayerDataFactory(...)` |
-| 세션 매니저 | `ISessionManager` | `builder.UseSessionManager(...)` |
-| 승인 로직 | `IConnectionApprover` | `builder.UseApprover(...)` (기본 `DefaultConnectionApprover`) |
-| 로거 | `ILobbyLogger` | `builder.UseLogger(...)` (기본 `NullLogger`) |
-| 트랜스포트 | `INetworkFacade` | 직접 구현 후 `builder.UseNetwork(...)` |
-| 페이로드 직렬화 | `IConnectionPayloadSerializer` | `builder.UsePayloadSerializer(...)` |
-| 플레이어 ID 저장소 | `IPlayerIdentityStore` | `new PlayerIdentity(myStore)` |
-| 틱 소스 | `ITickSource` | `builder.UseTickSource(...)` |
-| 코루틴 러너 | `ICoroutineRunner` | `builder.UseCoroutineRunner(...)` |
-| 커스텀 메시지 | `IMessageChannel<T>` | `builder.AddMessageChannel<T>()` |
-| 재연결 정책 | `ReconnectPolicy` | `builder.UseReconnectPolicy(...)` |
-| 최대 인원 | int | `builder.UseMaxPlayers(...)` (기본 8) |
-| 생애주기 훅 | `Action` | `builder.OnHostStarted/OnClientConnected/OnDisconnected(handler)` |
+`LobbyConnectionHost`가 너무 자동이라 싫거나, VContainer/Zenject 같은 컨테이너에 등록해 쓰고 싶으면 `LobbyBuilder`를 직접 호출하면 됩니다:
 
----
-
-## 아키텍처
-
-```
-┌─────────────────────────────────────────────┐
-│  LobbyConnection  (public API)              │
-│    • StartHost / StartClient / Shutdown     │
-│    • OnHostStarted / OnClientConnected …    │
-│    • GetPublisher / GetSubscriber           │
-└──────────────────┬──────────────────────────┘
-                   │
-           ┌───────▼────────┐        ┌────────────────┐
-           │  StateMachine  │◄───────┤   States (6)   │
-           └───────┬────────┘        └────────────────┘
-                   │
-       ┌───────────▼────────────┐   ┌──────────────────┐
-       │  INetworkFacade        │   │  IConnectionApprover │
-       │  (NetcodeNetworkFacade)│   │  ISessionManager     │
-       │  ITickSource           │   │  IConnectionPayload… │
-       │  ICoroutineRunner      │   │  ILobbyLogger        │
-       └────────────────────────┘   └──────────────────┘
+```csharp
+var lobby = new LobbyBuilder()
+    .UseNetwork(new NetcodeNetworkFacade(networkManager))
+    .UseTickSource(go.AddComponent<MonoBehaviourTickSource>())
+    .UseCoroutineRunner(go.AddComponent<MonoBehaviourCoroutineRunner>())
+    .UseLogger(new UnityDebugLogger())
+    .UsePayloadSerializer(new JsonUtilityConnectionPayloadSerializer())
+    .UseIdentity(new PlayerIdentity(new PlayerPrefsPlayerIdentityStore()))
+    .UseDefaultMessageChannels()
+    .UseDefaultStates()
+    .Build();
 ```
 
-- **Core** (순수 C#) — 상태 머신·세션·PubSub·빌더·추상화. `UnityEngine` 직접 의존 없음.
-- **Adapters** (Unity/Netcode) — `NetworkManager`, `MonoBehaviour`, `PlayerPrefs`, `JsonUtility` 어댑터.
-- **ConnectionMethods/IP** — IP 직접 연결 구현. 별도 asmdef이라 미사용 시 스트립 가능.
-
-상세 설계 문서: [`docs/superpowers/specs/2026-04-17-lobby-connection-architecture-design.md`](docs/superpowers/specs/2026-04-17-lobby-connection-architecture-design.md).
+이 호출을 컨테이너의 등록 콜백 안에 두면 `LobbyConnection`을 싱글턴으로 활용할 수 있습니다. 패키지 본체는 컨테이너에 의존하지 않습니다.
 
 ---
 
-## 테스트
+## 좀 더 깊이 알고 싶다면
 
-EditMode 단위 테스트가 `Tests/Editor/`에 포함되어 있다. Unity Test Runner에서 실행:
-
-- 상태 전이 (`StateMachineTests`, `StateTransitionTests`, `OfflineStateTests`)
-- 빌더 유효성 (`LobbyBuilderTests`, `LobbyBuilderBuildTests`)
-- 세션 (`SessionManagerTests`)
-- 승인 (`DefaultConnectionApproverTests`)
-- PubSub (`MessageChannelTests`)
-- 플레이어 ID (`PlayerIdentityTests`, `InMemoryPlayerIdentityStoreTests`)
-- 각 Fake 어댑터 자체 검증 (`Tests/Editor/Fakes/`)
-
-Core가 순수 C#이기 때문에 `INetworkFacade`, `ITickSource` 등을 Fake로 갈아끼우면 엔진 실행 없이 로직을 전량 검증할 수 있다.
-
----
-
-## 샘플
-
-| 경로 | 내용 |
+| 알고 싶은 것 | 어디 |
 |---|---|
-| `Samples~/BasicManual/` | `LobbyBuilder`를 수동으로 조립. UI Toolkit 기반 간단 UI(`BasicLobbyUI`) 포함. |
-
----
-
-## 변경 이력
-
-주요 변경은 [`CHANGELOG.md`](CHANGELOG.md) 참고.
-
-- **0.2.0** — VContainer 런타임 의존성 제거. 어셈블리 3분할. 상태 머신 타입 키 레지스트리화. `LobbyBuilder`·`LobbyConnection`·`LobbyConnectionHost` 구조로 재편. EditMode 테스트 스위트 도입.
+| 상태 머신 전이 흐름·확장 방법 | [`docs/superpowers/specs/2026-04-17-lobby-connection-architecture-design.md`](docs/superpowers/specs/2026-04-17-lobby-connection-architecture-design.md) |
+| 변경 이력 | [`CHANGELOG.md`](CHANGELOG.md) |
+| 실제 동작 샘플 | Package Manager → Samples 탭 → **Basic Manual Wiring** |
+| 인터페이스/확장 포인트 | `Runtime/Core/Abstractions/`의 `INetworkFacade`, `ISessionManager`, `IConnectionApprover` 등을 IDE에서 직접 |
 
 ---
 
