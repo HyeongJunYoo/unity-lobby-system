@@ -10,7 +10,7 @@ namespace Multiplayer.Lobby.Tests.Fakes
 {
     public sealed class StateHarness : IStateMachineContextDeps
     {
-        public StateMachine Machine { get; private set; }
+        public StateMachine.StateMachine Machine { get; private set; }
         public FakeNetworkFacade Network { get; } = new FakeNetworkFacade();
         public FakeSessionManager SessionManager { get; } = new FakeSessionManager();
         public FakeApprover Approver { get; } = new FakeApprover();
@@ -41,7 +41,7 @@ namespace Multiplayer.Lobby.Tests.Fakes
         IConnectionPayloadSerializer IStateMachineContextDeps.PayloadSerializer => PayloadSerializer;
         ICoroutineRunner IStateMachineContextDeps.CoroutineRunner => CoroutineRunner;
         INetworkFacade IStateMachineContextDeps.Network => Network;
-        StateMachine IStateMachineContextDeps.StateMachine => Machine;
+        StateMachine.StateMachine IStateMachineContextDeps.StateMachine => Machine;
 
         public Func<ulong, ConnectionPayload, ISessionPlayerData> CreatePlayerData { get; set; }
             = (id, payload) => new FakeSessionPlayerData(id, payload?.playerName ?? "");
@@ -50,7 +50,7 @@ namespace Multiplayer.Lobby.Tests.Fakes
         {
             var h = new StateHarness();
             var states = new Dictionary<Type, ConnectionState>();
-            h.Machine = new StateMachine(states, h.Network, h.Logger);
+            h.Machine = new StateMachine.StateMachine(states, h.Network, h.Logger);
             var ctx = new StateMachineContext(h);
             foreach (var t in stateTypes)
                 states[t] = (ConnectionState)Activator.CreateInstance(t, ctx);
@@ -61,7 +61,7 @@ namespace Multiplayer.Lobby.Tests.Fakes
         {
             var h = new StateHarness { ReconnectPolicy = policy };
             var states = new Dictionary<Type, ConnectionState>();
-            h.Machine = new StateMachine(states, h.Network, h.Logger);
+            h.Machine = new StateMachine.StateMachine(states, h.Network, h.Logger);
             var ctx = new StateMachineContext(h);
             foreach (var t in stateTypes)
                 states[t] = (ConnectionState)Activator.CreateInstance(t, ctx);

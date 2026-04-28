@@ -54,11 +54,11 @@ namespace Multiplayer.Lobby.Tests
             public ThirdState(IStateMachineContext ctx) : base(ctx) { }
         }
 
-        static (StateMachine, Dictionary<System.Type, ConnectionState>) BuildMachine()
+        static (StateMachine.StateMachine, Dictionary<System.Type, ConnectionState>) BuildMachine()
         {
             var ctxHolder = new ContextHolder();
             var states = new Dictionary<System.Type, ConnectionState>();
-            var sm = new StateMachine(states, new FakeNetworkFacade(), new FakeLogger());
+            var sm = new StateMachine.StateMachine(states, new FakeNetworkFacade(), new FakeLogger());
             ctxHolder.StateMachine = sm;
             var ctx = new StateMachineContext(ctxHolder); // Task 16에서 정의됨
             states[typeof(StubState)]  = new StubState(ctx);
@@ -69,7 +69,7 @@ namespace Multiplayer.Lobby.Tests
         // 테스트 전용 컨텍스트 조립 헬퍼
         sealed class ContextHolder : IStateMachineContextDeps
         {
-            public StateMachine StateMachine { get; set; }
+            public StateMachine.StateMachine StateMachine { get; set; }
             public INetworkFacade Network { get; } = new FakeNetworkFacade();
             public ISessionManager Sessions { get; } = new FakeSessionManager();
             public IConnectionApprover Approver { get; } = new FakeApprover();
