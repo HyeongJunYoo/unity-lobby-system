@@ -16,7 +16,7 @@
 | Unity | 6000.4+ |
 | `com.unity.netcode.gameobjects` | 2.11.0 |
 | `com.unity.transport` | 2.4.0 |
-| 현재 패키지 버전 | `0.2.0` |
+| 현재 패키지 버전 | `0.3.0` |
 
 패키지 본체는 어떤 DI 컨테이너도 **런타임 의존하지 않는다**.
 

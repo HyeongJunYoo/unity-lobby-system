@@ -2,6 +2,32 @@
 
 이 프로젝트의 변경 이력. [Keep a Changelog](https://keepachangelog.com/) 형식을 따른다.
 
+## [0.3.0] — 2026-04-28
+
+### Removed
+- VContainer 통합 샘플(`Samples~/VContainerIntegration/`) 및 README의 "3) VContainer 연동" 섹션. 패키지는 여전히 DI 컨테이너 중립이며, 사용자가 자신의 컨테이너 등록 콜백 안에서 `LobbyBuilder.Build()`를 호출하면 된다. 패키지에 특정 컨테이너 코드를 포함하지 않아 의존 표면을 축소.
+
+### Fixed
+- `ClientReconnectingState`: 1차/2차 시도 모두 `InitialBackoff`만 대기하던 백오프 진행 버그 수정. 이제 정책대로 1s → 2s → 4s 진행.
+- `BasicLobbyUI`: 포트 입력 `int.Parse` 직접 호출로 빈 입력에서 `FormatException`이 새던 문제 — `TryParse` + 1-65535 범위 검증으로 교체.
+- `BasicLobbyUI`: `OnDestroy`에서 `LobbyConnection` 이벤트·`ConnectStatus` 구독·`Button.clicked` 핸들러를 모두 해제 — 잠재적 누수 차단.
+
+### Added
+- 어댑터 단위 테스트 — `JsonUtilityConnectionPayloadSerializer` 라운드트립 / null·empty 처리.
+- 라이프사이클 메시지 발행 회귀 테스트 (`LobbyLifecyclePublishTests`).
+- SessionManager 두 Dict 일관성 회귀 테스트 (`SessionManagerSyncTests`).
+- 백오프 누적 검증 테스트 (`ClientReconnectingStateBackoffTests`).
+- `Samples~/BasicManual/README.md` — Scene 구성 단계별 안내.
+- `FakeCoroutineRunner.PumpToNextYield` / `RunRoutineToCompletion` 테스트 헬퍼.
+- `StateHarness.Build(ReconnectPolicy, ...)` 오버로드.
+
+### Changed
+- `Tests/Editor/Multiplayer.Lobby.Tests.Editor.asmdef`이 `Adapters` / `ConnectionMethods.IP` / `Unity.Netcode.Runtime` / `Unity.Networking.Transport` 참조 — 어댑터 단위 테스트 가능.
+- `SessionManager`: 내부 헬퍼 `AssociateUnchecked` / `DisassociateUnchecked` 추출. 외부 API 동일.
+- `IMessageChannel` / `MessageChannelBase`: 단일 스레드 동시성 계약을 XML 주석으로 명시.
+- `LobbyBuilder` / `LobbyConnection` / `ReconnectPolicy` / `LobbyLifecycleMessage`: 공개 진입점에 XML 주석 추가.
+- `README.md`: `LobbyConnectionHost.OnConfigure` 구독 시점(`Awake`/`OnEnable`)을 명시. 샘플 목록·표에서 VContainer 항목 제거. 일반 DI 통합 안내 한 문단 추가.
+
 ## [0.2.0] — 2026-04-17
 
 ### Breaking
