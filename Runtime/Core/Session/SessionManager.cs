@@ -28,12 +28,7 @@ namespace Multiplayer.Lobby.Session
             }
             else
             {
-                if (m_ClientIDToPlayerId.TryGetValue(clientId, out var pid))
-                {
-                    m_ClientIDToPlayerId.Remove(clientId);
-                    if (m_ClientData.TryGetValue(pid, out var d) && d.ClientID == clientId)
-                        m_ClientData.Remove(pid);
-                }
+                DisassociateUnchecked(clientId);
             }
         }
 
@@ -54,8 +49,7 @@ namespace Multiplayer.Lobby.Session
                 data.ClientID = clientId;
                 data.IsConnected = true;
             }
-            m_ClientIDToPlayerId[clientId] = playerId;
-            m_ClientData[playerId] = data;
+            AssociateUnchecked(clientId, playerId, data);
         }
 
         public string GetPlayerId(ulong clientId)
@@ -121,11 +115,22 @@ namespace Multiplayer.Lobby.Session
                 var d = GetPlayerData(id);
                 if (d != null && !d.IsConnected) toClear.Add(id);
             }
-            foreach (var id in toClear)
+            foreach (var id in toClear) DisassociateUnchecked(id);
+        }
+
+        void AssociateUnchecked(ulong clientId, string playerId, ISessionPlayerData data)
+        {
+            m_ClientIDToPlayerId[clientId] = playerId;
+            m_ClientData[playerId] = data;
+        }
+
+        void DisassociateUnchecked(ulong clientId)
+        {
+            if (m_ClientIDToPlayerId.TryGetValue(clientId, out var pid))
             {
-                var pid = m_ClientIDToPlayerId[id];
-                if (m_ClientData.TryGetValue(pid, out var d) && d.ClientID == id) m_ClientData.Remove(pid);
-                m_ClientIDToPlayerId.Remove(id);
+                m_ClientIDToPlayerId.Remove(clientId);
+                if (m_ClientData.TryGetValue(pid, out var d) && d.ClientID == clientId)
+                    m_ClientData.Remove(pid);
             }
         }
     }
