@@ -30,6 +30,11 @@ namespace Multiplayer.Lobby.Sample.BasicManual
         PlayerIdentity m_Identity;
         IConnectionPayloadSerializer m_Serializer;
 
+        System.Action m_OnHostStarted;
+        System.Action m_OnClientConnected;
+        System.Action m_OnDisconnected;
+        System.IDisposable m_StatusSub;
+
         public void Bind(LobbyConnection lobby, NetworkManager nm, PlayerIdentity identity, IConnectionPayloadSerializer serializer)
         {
             m_Lobby = lobby; m_Nm = nm; m_Identity = identity; m_Serializer = serializer;
@@ -41,12 +46,31 @@ namespace Multiplayer.Lobby.Sample.BasicManual
             m_ClientButton.clicked += OnClient;
             m_ShutdownButton.clicked += OnShutdown;
 
-            m_Lobby.OnHostStarted     += () => SetStatus("Host started");
-            m_Lobby.OnClientConnected += () => SetStatus("Client connected");
-            m_Lobby.OnDisconnected    += () => SetStatus("Disconnected");
+            m_OnHostStarted     = () => SetStatus("Host started");
+            m_OnClientConnected = () => SetStatus("Client connected");
+            m_OnDisconnected    = () => SetStatus("Disconnected");
 
-            m_Lobby.GetSubscriber<ConnectStatus>()
-                   .Subscribe(s => SetStatus($"Status: {s}"));
+            m_Lobby.OnHostStarted     += m_OnHostStarted;
+            m_Lobby.OnClientConnected += m_OnClientConnected;
+            m_Lobby.OnDisconnected    += m_OnDisconnected;
+
+            m_StatusSub = m_Lobby.GetSubscriber<ConnectStatus>()
+                .Subscribe(s => SetStatus($"Status: {s}"));
+        }
+
+        void OnDestroy()
+        {
+            if (m_Lobby != null)
+            {
+                if (m_OnHostStarted     != null) m_Lobby.OnHostStarted     -= m_OnHostStarted;
+                if (m_OnClientConnected != null) m_Lobby.OnClientConnected -= m_OnClientConnected;
+                if (m_OnDisconnected    != null) m_Lobby.OnDisconnected    -= m_OnDisconnected;
+            }
+            m_StatusSub?.Dispose();
+            m_StatusSub = null;
+            if (m_HostButton     != null) m_HostButton.clicked     -= OnHost;
+            if (m_ClientButton   != null) m_ClientButton.clicked   -= OnClient;
+            if (m_ShutdownButton != null) m_ShutdownButton.clicked -= OnShutdown;
         }
 
         void BuildUI(VisualElement root)
