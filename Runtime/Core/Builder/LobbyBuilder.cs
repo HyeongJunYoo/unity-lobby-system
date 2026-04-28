@@ -20,21 +20,33 @@ namespace Multiplayer.Lobby.Builder
         int m_MaxConnectedPlayers = 8;
         System.Func<ulong, ConnectionPayload, Session.ISessionPlayerData> m_CreatePlayerData;
 
+        /// <summary>네트워크 어댑터(NGO 등)를 주입한다. 필수.</summary>
         public LobbyBuilder UseNetwork(INetworkFacade network)          { m_Network = network; return this; }
+        /// <summary>틱 소스(예: MonoBehaviourTickSource)를 주입한다. 필수.</summary>
         public LobbyBuilder UseTickSource(ITickSource tick)             { m_Tick = tick; return this; }
+        /// <summary>코루틴 러너(예: MonoBehaviourCoroutineRunner)를 주입한다. 필수.</summary>
         public LobbyBuilder UseCoroutineRunner(ICoroutineRunner runner) { m_Coroutines = runner; return this; }
+        /// <summary>페이로드 직렬화기(JSON 등)를 주입한다. 필수.</summary>
         public LobbyBuilder UsePayloadSerializer(IConnectionPayloadSerializer s) { m_Serializer = s; return this; }
+        /// <summary>플레이어 식별자(PlayerIdentity)를 주입한다. 필수.</summary>
         public LobbyBuilder UseIdentity(PlayerIdentity identity)        { m_Identity = identity; return this; }
 
+        /// <summary>로거를 주입한다. 미설정 시 NullLogger.</summary>
         public LobbyBuilder UseLogger(ILobbyLogger logger)            { m_Logger = logger; return this; }
+        /// <summary>세션 매니저를 주입한다. 미설정 시 기본 SessionManager 자동 생성.</summary>
         public LobbyBuilder UseSessionManager(ISessionManager sm)     { m_Sessions = sm; return this; }
+        /// <summary>연결 승인자를 주입한다. 미설정 시 DefaultConnectionApprover.</summary>
         public LobbyBuilder UseApprover(IConnectionApprover approver) { m_Approver = approver; return this; }
+        /// <summary>재연결 정책(시도 횟수·백오프)을 주입한다. 미설정 시 ReconnectPolicy.Default.</summary>
         public LobbyBuilder UseReconnectPolicy(ReconnectPolicy policy){ m_ReconnectPolicy = policy; return this; }
+        /// <summary>최대 동시 접속 인원. 기본 8.</summary>
         public LobbyBuilder UseMaxPlayers(int max)                    { m_MaxConnectedPlayers = max; return this; }
+        /// <summary>승인된 플레이어를 위한 세션 데이터 객체를 생성하는 팩토리. 미설정 시 데이터가 추적되지 않음(경고 로그).</summary>
         public LobbyBuilder UseSessionPlayerDataFactory(
             System.Func<ulong, ConnectionPayload, Session.ISessionPlayerData> factory)
         { m_CreatePlayerData = factory; return this; }
 
+        /// <summary>모든 의존성 검증 후 LobbyConnection을 생성한다. 필수 의존성이 빠지면 InvalidOperationException.</summary>
         public LobbyConnection Build()
         {
             if (m_Network     == null) throw new InvalidOperationException("LobbyBuilder.UseNetwork(...)이 호출되지 않았습니다.");
