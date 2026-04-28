@@ -115,16 +115,38 @@ namespace Multiplayer.Lobby.Sample.BasicManual
         }
 
         void OnHost()
-            => m_Lobby.StartHostIp(m_Nm, m_Identity, m_Serializer,
-                m_PlayerNameField.value, m_IpField.value, int.Parse(m_PortField.value),
+        {
+            if (!TryGetPort(out var port)) return;
+            m_Lobby.StartHostIp(m_Nm, m_Identity, m_Serializer,
+                m_PlayerNameField.value, m_IpField.value, port,
                 Debug.isDebugBuild);
+        }
 
         void OnClient()
-            => m_Lobby.StartClientIp(m_Nm, m_Identity, m_Serializer,
-                m_PlayerNameField.value, m_IpField.value, int.Parse(m_PortField.value),
+        {
+            if (!TryGetPort(out var port)) return;
+            m_Lobby.StartClientIp(m_Nm, m_Identity, m_Serializer,
+                m_PlayerNameField.value, m_IpField.value, port,
                 Debug.isDebugBuild);
+        }
 
         void OnShutdown() => m_Lobby.RequestShutdown();
+
+        bool TryGetPort(out int port)
+        {
+            if (!int.TryParse(m_PortField.value, out port))
+            {
+                SetStatus($"Invalid port: '{m_PortField.value}' (must be a number)");
+                port = 0;
+                return false;
+            }
+            if (port < 1 || port > 65535)
+            {
+                SetStatus($"Invalid port: {port} (must be 1-65535)");
+                return false;
+            }
+            return true;
+        }
 
         void SetStatus(string s)
         {
